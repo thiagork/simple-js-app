@@ -1,63 +1,91 @@
-var pokemonRepository = (function () {
-    var repository = [
-        {name: "Pikachu", height: 0.4, types: ["electric"]}, 
-        {name: "Charmander", height: 0.6, types: ["fire"]},
-        {name: "Magikarp", height: '0.9', types: ["water"]}];
+var programWrapper = (function () {
+    var repository = [];
+    var apiUrl = "https://pokeapi.co/api/v2/pokemon/?limit=150";
     
-
     function getAll () {
         return repository;
     }
-
-
-    function add (pokemon) {
-        repository.push(pokemon);
+    
+    
+    function add (item) {
+        repository.push(item);
     }    
-
-
-    function addListItem (pokemonName) {
+    
+    function addListItem (item, index) {
         // Creates and appends the list item
         var $newListItem = document.createElement("li");
-        var $appendNewListItem = document.querySelector(".pokemon-list");
-        $newListItem.setAttribute("class", "pokemon-list__item");
+        var $appendNewListItem = document.querySelector(".item-list");
+        $newListItem.setAttribute("class", "item-list__item");
         $appendNewListItem.appendChild($newListItem);
-
+        
         // Creates and appends the button to the newly created list item
         var $newButtonInsideListItem = document.createElement("button");
-        $newButtonInsideListItem.setAttribute("class", "pokemon-list__item__button");
-        var $appendNewButtonInsideListItem = document.querySelector(".pokemon-list__item:last-child");
-        $newButtonInsideListItem.innerText = pokemonName;
+        $newButtonInsideListItem.setAttribute("class", "item-list__item__button");
+        $newButtonInsideListItem.setAttribute("id", String(index));
+        var $appendNewButtonInsideListItem = document.querySelector(".item-list__item:last-child");
+        $newButtonInsideListItem.innerText = item["name"];
         $appendNewButtonInsideListItem.appendChild($newButtonInsideListItem);
-
+        
         // Adds event listener to the list item
         $newButtonInsideListItem.addEventListener("click", element =>{
             var $clickedButton = element.target;
-            showDetails($clickedButton.innerText)
-        })
-    }
-
-
-    function showDetails(pokemonName) {
-        
-        var pokemon = repository.filter(element => {
-            return element.name === pokemonName;
-        });
-        pokemon.map(element => {
-            console.log(element);
+            showDetails($clickedButton.id);
         });
     }
-
-
+    
+    function loadList() {
+        return fetch(apiUrl).then(function (response) {
+            return response.json();
+        }).then(function (json) {
+            json.results.forEach(function (item) {
+                var data = {
+                    name: item.name,
+                    detailsUrl: item.url
+                };
+                add(data);
+            });
+        }).catch(function (e) {
+            console.error(e);
+        });
+    }    
+    
+    
+    function loadDetails(item) {
+        var url = item.detailsUrl;
+        return fetch(url).then(function (response) {
+            return response.json();
+        }).then(function (details) {
+            // Now we add the details to the item
+            item.imageUrl = details.sprites.front_default;
+            item.height = details.height;
+            item.types = Object.keys(details.types);
+        }).catch(function (e) {
+            console.error(e);
+        });
+    }
+    
+    
+    function showDetails(item) {
+        programWrapper.loadDetails(repository[item]).then(function () {
+            console.log(repository[item]);   
+        });
+    }
+    
+    
     return {
         add: add,
-        getAll: getAll,
         addListItem: addListItem,
+        getAll: getAll,
+        // search: search,
+        loadList: loadList,
+        loadDetails: loadDetails,
         showDetails: showDetails
     };
 }) ();
 
 
-pokemonRepository.getAll().forEach(element => {
-    // Shows every pokemon inside repository in the app
-    pokemonRepository.addListItem(element.name);
-});
+programWrapper.loadList().then(function() {
+    // Now the data is loaded!
+    programWrapper.getAll().forEach(function(item, index){
+        programWrapper.addListItem(item, index);
+    });});
