@@ -84,9 +84,6 @@ let programWrapper = (() => {
     function showDetails(item) {
         var requestUrl = getAll()[item].detailsUrl;
         makeRequest(requestUrl, loadDetails);
-        // programWrapper.loadDetails(getAll()[item].detailsUrl), (() => {
-        //     console.log(repository[item]);   
-        // });
     }
 
     return {
