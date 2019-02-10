@@ -1,7 +1,12 @@
-const apiUrl = 'https://pokeapi.co/api/v2/pokemon/?limit=150';
 
 let programWrapper = (() => {
+    const apiUrl = 'https://pokeapi.co/api/v2/pokemon/?limit=150';
     let repository = [];
+
+
+    // Runs the code
+    main();
+
 
     function getAll() {
         return repository;
@@ -54,7 +59,6 @@ let programWrapper = (() => {
     }
 
     function loadList(responseFromAPI) {
-        // Gets only Name and URL from the API
         JSON.parse(responseFromAPI).results.forEach(item => {
             let data = {
                 name: item.name,
@@ -77,14 +81,135 @@ let programWrapper = (() => {
         item.imageUrl = details.sprites.front_default;
         item.height = details.height;
         item.types = Object.keys(details.types);
-        console.log(item);
+        item.weight = details.weight;
+        return item;
     }
-    
+
+    function createModalWithDetails(responseFromAPI) {
+        let item = loadDetails(responseFromAPI);
+        
+        showModal(item.name, `height: ${item.height}\n weight: ${item.weight}`);
+        
+        let $modalContainer = document.querySelector('.modal');
+        
+        let modalImg = document.createElement('div');
+        modalImg.classList.add('modal-img');
+        
+        let img = document.createElement('img');
+        img.setAttribute('src', `${item.imageUrl}`);
+        img.setAttribute('alt', `an image of ${item.name}`);
+        
+        modalImg.appendChild(img);
+        $modalContainer.appendChild(modalImg);
+    }
 
     function showDetails(item) {
-        var requestUrl = getAll()[item].detailsUrl;
-        makeRequest(requestUrl, loadDetails);
+        let requestUrl = getAll()[item].detailsUrl;
+        makeRequest(requestUrl, createModalWithDetails);
     }
+
+    function showModal(title, text) {
+        let $modalContainer = document.querySelector('#modal-container');
+        $modalContainer.innerHTML = '';
+        
+        let modal = document.createElement('div');
+        modal.classList.add('modal');
+        
+        let closeButtonElement = document.createElement('button');
+        closeButtonElement.classList.add('modal-close');
+        closeButtonElement.innerText = 'Close';
+        closeButtonElement.addEventListener('click', hideModal);
+
+        let titleElement = document.createElement('h1');
+        titleElement.innerText = title;
+
+        let contentElement = document.createElement('p');
+        contentElement.innerText = text;
+
+        modal.appendChild(closeButtonElement);
+        modal.appendChild(titleElement);
+        modal.appendChild(contentElement);
+        $modalContainer.appendChild(modal);
+
+        $modalContainer.classList.add('is-visible');
+        
+    }
+
+    function hideModal(resolveOrReject=null) {
+        let $modalContainer = document.querySelector('#modal-container');
+        $modalContainer.classList.remove('is-visible');
+        // If no arguments are passed, it does nothing (defaults to null).
+        // Pass resolve() or reject() functions as arguments
+        if (typeof(resolveOrReject) === 'function') {
+            resolveOrReject();
+        }
+    }
+
+    function showDialog(title, text, resolve, reject) {
+        showModal(title, text);
+        let modal = document.querySelector('.modal');
+        
+        let confirmButton = document.createElement('button');
+        confirmButton.classList.add('modal-confirm');
+        confirmButton.innerText = 'Confirm';
+        confirmButton.addEventListener('click', () => {
+            hideModal(resolve);
+        });
+    
+        let cancelButton = document.createElement('button');
+        cancelButton.classList.add('modal-cancel');
+        cancelButton.innerText = 'Cancel';
+        cancelButton.addEventListener('click', () => {
+            hideModal(reject);
+        });
+
+        modal.appendChild(confirmButton);
+        modal.appendChild(cancelButton);
+
+        confirmButton.focus();
+    }
+    
+    // For testing hideModal()
+    function resolved () {
+        console.log('User confirmed');
+    }
+
+    // For testing hideModal()
+    function rejected () {
+        console.log('User rejected');
+    }
+
+    function main () {
+        // Populates the page with the items retrieved from API
+        makeRequest(apiUrl, loadList);
+
+
+        // Code for creating modals
+        document.querySelector('#show-modal').addEventListener('click', () => {
+            showModal('Modal title', 'This is the modal content.');
+        });
+
+        document.querySelector('#show-dialog').addEventListener('click', () => {
+            showDialog('Confirm action', 'Are you sure?', resolved, rejected);
+        });
+
+        // Code for closing modals with 'Esc' or clicking outside the modal
+        window.addEventListener('keydown', e => {
+            let $modalContainer = document.querySelector('#modal-container');
+            if (e.key === 'Escape' && $modalContainer.classList.contains('is-visible')) {
+                hideModal(true);
+            }
+        });
+
+        window.addEventListener('click', e => {
+            let target = e.target;
+            let $modalContainer = document.querySelector('#modal-container');
+            if (target === $modalContainer) {
+                hideModal(true);
+            }
+        });
+    }
+
 
     return {
         add: add,
@@ -93,9 +218,10 @@ let programWrapper = (() => {
         loadList: loadList,
         loadDetails: loadDetails,
         showDetails: showDetails,
-        makeRequest: makeRequest
+        makeRequest: makeRequest,
+        showModal: showModal,
+        hideModal: hideModal,
+        showDialog: showDialog,
+        main: main
     };
 }) ();
-
-
-programWrapper.makeRequest(apiUrl, programWrapper.loadList);
