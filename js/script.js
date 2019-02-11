@@ -76,7 +76,7 @@ let programWrapper = (() => {
 
     function loadDetails(responseFromAPI) {
         let details = JSON.parse(responseFromAPI);
-        // id is the same as position in array(index) + 1
+        // id is the same as position in array[index] + 1
         let item = getAll()[details.id - 1];
         item.imageUrl = details.sprites.front_default;
         item.height = details.height;
@@ -168,30 +168,10 @@ let programWrapper = (() => {
 
         confirmButton.focus();
     }
-    
-    // For testing hideModal()
-    function resolved () {
-        console.log('User confirmed');
-    }
-
-    // For testing hideModal()
-    function rejected () {
-        console.log('User rejected');
-    }
 
     function main () {
         // Populates the page with the items retrieved from API
         makeRequest(apiUrl, loadList);
-
-
-        // Code for creating modals
-        document.querySelector('#show-modal').addEventListener('click', () => {
-            showModal('Modal title', 'This is the modal content.');
-        });
-
-        document.querySelector('#show-dialog').addEventListener('click', () => {
-            showDialog('Confirm action', 'Are you sure?', resolved, rejected);
-        });
 
         // Code for closing modals with 'Esc' or clicking outside the modal
         window.addEventListener('keydown', e => {
